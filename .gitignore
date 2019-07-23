@@ -1,0 +1,6 @@
+/bin/compiled.js
+/bower_components/
+/node_modules/
+/out/
+*.swp
+
