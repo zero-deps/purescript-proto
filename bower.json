@@ -8,6 +8,7 @@
     "purescript-ordered-collections": "*"
   },
   "devDependencies": {
+    "purescript-node-process": "*",
     "purescript-psci-support": "*"
   }
 }

@@ -1,6 +1,18 @@
-# purescript-proto
+# purescript-protobuf
 
-Protobuf encoding/decoding for PureScript
+Protobuf encoding/decoding library for PureScript
+
+## Install
+
+Add to your `bower.json`:
+
+```json
+{
+  "dependencies": {
+    "purescript-protobuf": "https://github.com/zero-deps/purescript-protobuf.git"
+  }
+}
+```
 
 ## Build
 
@@ -8,7 +20,13 @@ Protobuf encoding/decoding for PureScript
 npm i
 npm run dep
 npm run com
-npm run repl
+npm run rep
+```
+
+## Test
+
+```bash
+npm run tes
 ```
 
 ## Examples

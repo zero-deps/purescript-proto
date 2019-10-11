@@ -38,40 +38,39 @@ int32 = uint32
 uint32 :: Uint8Array -> Pos -> Result Int
 uint32 xs pos = do
   x <- index xs pos
-  let val = (x .&. 127) `zshr` 0
+  let val = x .&. 127
   if x < 128 then pure { pos: pos+1, val: val } else do
     x1 <- index xs (pos+1)
-    let val1 = (val .|. ((x1 .&. 127) `shl` 7)) `zshr` 0
+    let val1 = (val .|. ((x1 .&. 127) `shl` 7))
     if x1 < 128 then pure { pos: pos+2, val: val1 } else do
       x2 <- index xs (pos+2)
-      let val2 = (val1 .|. ((x2 .&. 127) `shl` 14)) `zshr` 0
+      let val2 = (val1 .|. ((x2 .&. 127) `shl` 14))
       if x2 < 128 then pure { pos: pos+3, val: val2 } else do
         x3 <- index xs (pos+3)
-        let val3 = (val2 .|. ((x3 .&. 127) `shl` 21)) `zshr` 0
+        let val3 = (val2 .|. ((x3 .&. 127) `shl` 21))
         if x3 < 128 then pure { pos: pos+4, val: val3 } else do
           x4 <- index xs (pos+4)
           let val4 = val3 .|. ((x4 .&. 15) `shl` 28)
           if x4 < 128 then pure { pos: pos+5, val: val4 `zshr` 0 } else do
-            let len = length xs
             x5 <- index xs (pos+5)
             if x5 < 128
-              then pure { pos: pos+6, val }
+              then pure { pos: pos+6, val: val4 }
               else do
                 x6 <- index xs (pos+6)
                 if x6 < 128
-                  then pure { pos: pos+7, val }
+                  then pure { pos: pos+7, val: val4 }
                   else do
                     x7 <- index xs (pos+7)
                     if x7 < 128
-                      then pure { pos: pos+8, val }
+                      then pure { pos: pos+8, val: val4 }
                       else do
                         x8 <- index xs (pos+8)
                         if x8 < 128
-                          then pure { pos: pos+9, val }
+                          then pure { pos: pos+9, val: val4 }
                           else do
                             x9 <- index xs (pos+9)
                             if x9 < 128
-                              then pure { pos: pos+10, val }
+                              then pure { pos: pos+10, val: val4 }
                               else Left $ IntTooLong
 
 boolean :: Uint8Array -> Pos -> Result Boolean

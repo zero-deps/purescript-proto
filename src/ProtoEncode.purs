@@ -2,12 +2,20 @@ module Proto.Encode where
 
 import Data.Array (snoc)
 import Data.ArrayBuffer.Types (Uint8Array)
-import Data.Int.Bits (zshr, (.&.), (.|.))
+import Data.Int.Bits (zshr, shr, (.&.), (.|.))
 import Prelude
 import Proto.Uint8ArrayExt (length, concatAll, fromArray)
 import Proto.Utf8 as Utf8
 
 foreign import splitFloat64 :: Number -> { low :: Int, high :: Int }
+
+int32 :: Int -> Uint8Array
+int32 x | x >= 0 = uint32 x
+int32 x = fromArray $ loop [] x 0
+  where
+  loop :: Array Int -> Int -> Int -> Array Int
+  loop acc val i | i < 9 = loop (acc `snoc` ((val .&. 127) .|. 128)) (val `shr` 7) (i + 1)
+  loop acc val i = acc `snoc` 1
 
 uint32 :: Int -> Uint8Array
 uint32 = loop [] >>> fromArray
