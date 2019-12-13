@@ -17,7 +17,8 @@ data Error
   | UnexpectedCase Int Int
   | MissingFields String
   | IntTooLong
-type Result a = Either Error { pos :: Int, val :: a }
+type Result' a = Either Error a
+type Result a = Result' { pos :: Int, val :: a }
 
 foreign import joinFloat64 :: Int -> Int -> Number
 
@@ -29,7 +30,7 @@ instance showError :: Show Error where
   show (MissingFields x) = "missing fields in="<>x
   show (IntTooLong) = "varint32 too long"
 
-index :: Uint8Array -> Int -> Either Error Int
+index :: Uint8Array -> Int -> Result' Int
 index xs pos = lmap (\x -> OutOfBound x.pos x.len) $ Uint8Array.index xs pos
 
 int32 :: Uint8Array -> Pos -> Result Int
