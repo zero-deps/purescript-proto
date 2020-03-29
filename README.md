@@ -17,16 +17,15 @@ Add to your `bower.json`:
 ## Build
 
 ```bash
-npm i
-npm run dep
-npm run com
-npm run rep
+./dep
+./com
+purs repl 'bower_components/purescript-*/src/**/*.purs'
 ```
 
 ## Test
 
 ```bash
-npm run tes
+./tes
 ```
 
 ## Examples
