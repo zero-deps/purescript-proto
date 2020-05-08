@@ -1,13 +1,8 @@
 {
-  "name": "purs",
+  "name": "purescript-protobuf",
   "version": "1.0.0",
-  "dependencies": {
-    "purescript-arrays": "*",
-    "purescript-arraybuffer-types": "*",
-    "purescript-integers": "*",
-    "purescript-ordered-collections": "*"
-  },
   "devDependencies": {
+    "purescript-integers": "*",
     "purescript-node-process": "*",
     "purescript-psci-support": "*"
   }

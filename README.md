@@ -17,28 +17,27 @@ Add to your `bower.json`:
 ## Build
 
 ```bash
-./dep
-./com
+bin/dep
+bin/com
 purs repl 'bower_components/purescript-*/src/**/*.purs'
 ```
 
 ## Test
 
 ```bash
-./tes
+bin/tes
 ```
 
 ## Examples
 
 ```purescript
-import Data.ArrayBuffer.Types (Uint8Array)
 import Data.Either (Either(Left, Right))
 import Data.Int.Bits (zshr, (.&.))
 import Data.Maybe (Maybe(Just, Nothing))
 import Prelude
 import Proto.Decode as Decode
 import Proto.Encode as Encode
-import Proto.Uint8ArrayExt (length, concatAll, fromArray)
+import Proto.Uint8Array (Uint8Array, length, concatAll, fromArray)
 
 type PageSeo = { descr :: String, order :: Number }
 type PageSeo' = { descr :: Maybe String, order :: Maybe Number }

@@ -1,6 +1,6 @@
+.DS_Store
+*.swp
 /bower_components/
 /node_modules/
-/out/
 /out_test/
-*.swp
-
+/out/

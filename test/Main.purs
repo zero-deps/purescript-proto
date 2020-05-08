@@ -3,7 +3,7 @@ module Test.Main where
 import Effect (Effect)
 import Effect.Console (log)
 import Prelude (class Eq, class Show, Unit, discard, pure, show, unit, negate, ($), (<>), (==))
-import Data.ArrayBuffer.Types (Uint8Array)
+import Proto.Uint8Array (Uint8Array, fromArray)
 import Data.Either (Either(Left, Right))
 import Node.Process (exit)
 import Proto.Decode as Decode
@@ -14,6 +14,16 @@ main = do
   case_int_zero
   case_int_positive
   case_int_negative
+  case_eq
+
+case_eq :: Effect Unit
+case_eq = do
+  let xs = fromArray []
+  let ys = fromArray []
+  if xs == ys then log "case_eq: ok"
+  else do
+    log "case_eq: failed"
+    exit 99
 
 case_int_zero :: Effect Unit
 case_int_zero = do

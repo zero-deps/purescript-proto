@@ -289,45 +289,29 @@ var PS = {};
 (function(exports) {
   "use strict"
 
-  exports.length = function(xs) {
-    return xs.length
-  }
+  exports.length = xs => xs.length
 
-  exports.indexUnsafe = function(xs) {
-    return function(i) {
-      return xs[i]
-    }
-  }
+  exports.indexUnsafe = xs => i => xs[i]
 
-  exports.slice = function(xs) {
-    return function(start) {
-      return function(end) {
-        return xs.slice(start, end)
-      }
-    }
-  }
+  exports.slice = xs => start => end => xs.slice(start, end)
 
-  exports.fromArray = function(xs) {
-    return new Uint8Array(xs)
-  }
+  exports.fromArray = xs => new Uint8Array(xs)
 
-  exports.concatAll = function(xs) {
-    var zs = new Uint8Array(xs.reduce(function(acc, x) {
-      return acc + x.length
-    }, 0))
-    xs.reduce(function(acc, x) {
+  exports.concatAll = xs => {
+    const zs = new Uint8Array(xs.reduce((acc, x) => acc + x.length, 0))
+    xs.reduce((acc, x) => {
       zs.set(x, acc)
       return acc + x.length
     }, 0)
     return zs
   }
-})(PS["Proto.Uint8ArrayExt"] = PS["Proto.Uint8ArrayExt"] || {});
+})(PS["Proto.Uint8Array"] = PS["Proto.Uint8Array"] || {});
 (function($PS) {
   "use strict";
-  $PS["Proto.Uint8ArrayExt"] = $PS["Proto.Uint8ArrayExt"] || {};
-  var exports = $PS["Proto.Uint8ArrayExt"];
-  var $foreign = $PS["Proto.Uint8ArrayExt"];
-  var Data_Either = $PS["Data.Either"];                
+  $PS["Proto.Uint8Array"] = $PS["Proto.Uint8Array"] || {};
+  var exports = $PS["Proto.Uint8Array"];
+  var $foreign = $PS["Proto.Uint8Array"];
+  var Data_Either = $PS["Data.Either"];        
   var index = function (xs) {
       return function (pos) {
           var len = $foreign.length(xs);
@@ -453,7 +437,7 @@ var PS = {};
   var Data_Either = $PS["Data.Either"];
   var Data_Show = $PS["Data.Show"];
   var Data_Unit = $PS["Data.Unit"];
-  var Proto_Uint8ArrayExt = $PS["Proto.Uint8ArrayExt"];
+  var Proto_Uint8Array = $PS["Proto.Uint8Array"];
   var Proto_Utf8 = $PS["Proto.Utf8"];                
   var OutOfBound = (function () {
       function OutOfBound(value0, value1) {
@@ -516,7 +500,7 @@ var PS = {};
   var skip = function (n) {
       return function (xs) {
           return function (pos0) {
-              var len = Proto_Uint8ArrayExt.length(xs);
+              var len = Proto_Uint8Array.length(xs);
               var $12 = (pos0 + n | 0) > len;
               if ($12) {
                   return new Data_Either.Left(new OutOfBound(pos0 + n | 0, len));
@@ -547,13 +531,13 @@ var PS = {};
       if (v instanceof IntTooLong) {
           return "varint32 too long";
       };
-      throw new Error("Failed pattern match at Proto.Decode (line 25, column 1 - line 31, column 42): " + [ v.constructor.name ]);
+      throw new Error("Failed pattern match at Proto.Decode (line 24, column 1 - line 30, column 42): " + [ v.constructor.name ]);
   });
   var index = function (xs) {
       return function (pos) {
           return Data_Bifunctor.lmap(Data_Either.bifunctorEither)(function (x) {
               return new OutOfBound(x.pos, x.len);
-          })(Proto_Uint8ArrayExt.index(xs)(pos));
+          })(Proto_Uint8Array.index(xs)(pos));
       };
   };
   var skip$prime = function ($copy_xs) {
@@ -579,7 +563,7 @@ var PS = {};
                   $copy_pos = pos + 1 | 0;
                   return;
               };
-              throw new Error("Failed pattern match at Proto.Decode (line 113, column 3 - line 116, column 32): " + [ v.constructor.name ]);
+              throw new Error("Failed pattern match at Proto.Decode (line 112, column 3 - line 115, column 32): " + [ v.constructor.name ]);
           };
           while (!$tco_done) {
               $tco_result = $tco_loop($tco_var_xs, $copy_pos);
@@ -762,14 +746,14 @@ var PS = {};
       return function (pos0) {
           return Control_Bind.bind(Data_Either.bindEither)(uint32(xs)(pos0))(function (v) {
               var end = v.pos + v.val | 0;
-              var len = Proto_Uint8ArrayExt.length(xs);
+              var len = Proto_Uint8Array.length(xs);
               var $54 = end > len;
               if ($54) {
                   return new Data_Either.Left(new OutOfBound(end, len));
               };
               return Control_Applicative.pure(Data_Either.applicativeEither)({
                   pos: v.pos + v.val | 0,
-                  val: Proto_Uint8ArrayExt.slice(xs)(v.pos)(end)
+                  val: Proto_Uint8Array.slice(xs)(v.pos)(end)
               });
           });
       };
@@ -878,7 +862,7 @@ var PS = {};
   var exports = $PS["Proto.Encode"];
   var $foreign = $PS["Proto.Encode"];
   var Data_Array = $PS["Data.Array"];
-  var Proto_Uint8ArrayExt = $PS["Proto.Uint8ArrayExt"];
+  var Proto_Uint8Array = $PS["Proto.Uint8Array"];
   var Proto_Utf8 = $PS["Proto.Utf8"];                
   var uint32 = (function () {
       var loop = function ($copy_acc) {
@@ -904,7 +888,7 @@ var PS = {};
       };
       var $9 = loop([  ]);
       return function ($10) {
-          return Proto_Uint8ArrayExt.fromArray($9($10));
+          return Proto_Uint8Array.fromArray($9($10));
       };
   })();
   var string = function (x) {
@@ -913,7 +897,7 @@ var PS = {};
       if ($2) {
           return uint32(0);
       };
-      return Proto_Uint8ArrayExt.concatAll([ uint32(len), Proto_Utf8.toUint8Array(x)(len) ]);
+      return Proto_Uint8Array.concatAll([ uint32(len), Proto_Utf8.toUint8Array(x)(len) ]);
   };
   var int32 = function (x) {
       if (x >= 0) {
@@ -943,31 +927,31 @@ var PS = {};
               };
           };
       };
-      return Proto_Uint8ArrayExt.fromArray(loop([  ])(x)(0));
+      return Proto_Uint8Array.fromArray(loop([  ])(x)(0));
   };
   var $$double = function (y) {
       var fixedUint32 = function (x) {
-          return Proto_Uint8ArrayExt.fromArray([ x >>> 0 & 255, x >>> 8 & 255, x >>> 16 & 255, x >>> 24 & 255 ]);
+          return Proto_Uint8Array.fromArray([ x >>> 0 & 255, x >>> 8 & 255, x >>> 16 & 255, x >>> 24 & 255 ]);
       };
       var x = $foreign.splitFloat64(y);
-      return Proto_Uint8ArrayExt.concatAll([ fixedUint32(x.low), fixedUint32(x.high) ]);
+      return Proto_Uint8Array.concatAll([ fixedUint32(x.low), fixedUint32(x.high) ]);
   };
   var bytes = function (xs) {
-      var len = Proto_Uint8ArrayExt.length(xs);
+      var len = Proto_Uint8Array.length(xs);
       var $7 = len === 0;
       if ($7) {
           return uint32(0);
       };
-      return Proto_Uint8ArrayExt.concatAll([ uint32(len), xs ]);
+      return Proto_Uint8Array.concatAll([ uint32(len), xs ]);
   };
   var $$boolean = function (v) {
       if (v) {
-          return Proto_Uint8ArrayExt.fromArray([ 1 ]);
+          return Proto_Uint8Array.fromArray([ 1 ]);
       };
       if (!v) {
-          return Proto_Uint8ArrayExt.fromArray([ 0 ]);
+          return Proto_Uint8Array.fromArray([ 0 ]);
       };
-      throw new Error("Failed pattern match at Proto.Encode (line 39, column 1 - line 39, column 33): " + [ v.constructor.name ]);
+      throw new Error("Failed pattern match at Proto.Encode (line 38, column 1 - line 38, column 33): " + [ v.constructor.name ]);
   };
   exports["int32"] = int32;
   exports["uint32"] = uint32;

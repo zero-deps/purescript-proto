@@ -1,10 +1,9 @@
 module Proto.Encode where
 
 import Data.Array (snoc)
-import Data.ArrayBuffer.Types (Uint8Array)
 import Data.Int.Bits (zshr, shr, (.&.), (.|.))
 import Prelude
-import Proto.Uint8ArrayExt (length, concatAll, fromArray)
+import Proto.Uint8Array (Uint8Array, length, concatAll, fromArray)
 import Proto.Utf8 as Utf8
 
 foreign import splitFloat64 :: Number -> { low :: Int, high :: Int }

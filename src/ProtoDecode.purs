@@ -1,12 +1,11 @@
 module Proto.Decode where
 
-import Data.ArrayBuffer.Types (Uint8Array)
 import Data.Bifunctor (lmap)
 import Data.Either (Either(Left, Right))
 import Data.Int.Bits (shl, zshr, (.&.), (.|.))
 import Prelude
-import Proto.Uint8ArrayExt (length, slice)
-import Proto.Uint8ArrayExt as Uint8Array
+import Proto.Uint8Array (Uint8Array, length, slice)
+import Proto.Uint8Array (index) as Uint8Array
 import Proto.Utf8 as Utf8
 
 type Pos = Int
