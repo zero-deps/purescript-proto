@@ -1,8 +1,10 @@
 {
   "name": "purescript-protobuf",
   "version": "1.0.0",
+  "dependencies": {
+    "purescript-integers": "*"
+  },
   "devDependencies": {
-    "purescript-integers": "*",
     "purescript-node-process": "*",
     "purescript-psci-support": "*"
   }
