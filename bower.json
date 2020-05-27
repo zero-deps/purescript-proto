@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "dependencies": {
     "purescript-integers": "*"
+  , "purescript-arrays": "*"
   },
   "devDependencies": {
     "purescript-node-process": "*",
