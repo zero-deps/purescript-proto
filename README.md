@@ -12,7 +12,7 @@ let additions =
       { protobuf =
         { dependencies = [ "integers", "arrays", "arraybuffer-types" ]
         , repo = "https://github.com/zero-deps/purescript-protobuf.git"
-        , version = "1.1.3"
+        , version = "1.1.5"
         }
       }
 ```
@@ -23,7 +23,7 @@ let additions =
 ```json
 {
   "dependencies": {
-    "purescript-protobuf": "https://github.com/zero-deps/purescript-protobuf.git#1.1.3"
+    "purescript-protobuf": "https://github.com/zero-deps/purescript-protobuf.git#1.1.5"
   }
 }
 ```

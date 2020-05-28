@@ -23,5 +23,8 @@ index xs pos =
   let len = length xs
   in if 0 <= pos && pos < len then Right (indexUnsafe xs pos) else Left { pos, len }
 
-coerce :: Uint8Array -> Types.Uint8Array
-coerce = unsafeCoerce
+unwrap :: Uint8Array -> Types.Uint8Array
+unwrap = unsafeCoerce
+
+wrap :: Types.Uint8Array -> Uint8Array
+wrap = unsafeCoerce
