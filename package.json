@@ -1,0 +1,13 @@
+{
+  "private": true,
+  "scripts": {
+    "com": "spago build",
+    "tes": "spago test",
+    "rep": "spago repl"
+  },
+  "devDependencies": {
+    "purescript": "0.13.8",
+    "purescript-psa": "*",
+    "spago": "*"
+  }
+}

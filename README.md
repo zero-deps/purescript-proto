@@ -4,28 +4,36 @@ Protobuf encoding/decoding library for PureScript
 
 ## Install
 
-Add to your `bower.json`:
+### spago
 
+packages.dhall:
+```
+let additions =
+      { protobuf =
+        { dependencies = [ "integers", "arrays", "arraybuffer-types" ]
+        , repo = "https://github.com/zero-deps/purescript-protobuf.git"
+        , version = "1.1.3"
+        }
+      }
+```
+
+### bower
+
+`bower.json`:
 ```json
 {
   "dependencies": {
-    "purescript-protobuf": "https://github.com/zero-deps/purescript-protobuf.git"
+    "purescript-protobuf": "https://github.com/zero-deps/purescript-protobuf.git#1.1.3"
   }
 }
 ```
 
-## Build
+## Build & Test
 
 ```bash
-bin/dep
 bin/com
-purs repl 'bower_components/purescript-*/src/**/*.purs'
-```
-
-## Test
-
-```bash
 bin/tes
+spago repl
 ```
 
 ## Examples
@@ -86,4 +94,3 @@ decodePageSeo _xs_ pos0 = do
                     decode end acc pos3
       else pure { pos: pos1, val: acc }
 ```
-

@@ -1,6 +1,5 @@
 .DS_Store
 *.swp
-/bower_components/
+/.spago/
 /node_modules/
-/out_test/
-/out/
+/output/

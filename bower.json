@@ -4,6 +4,7 @@
   "dependencies": {
     "purescript-integers": "*"
   , "purescript-arrays": "*"
+  , "purescript-arraybuffer-types": "*"
   },
   "devDependencies": {
     "purescript-node-process": "*",

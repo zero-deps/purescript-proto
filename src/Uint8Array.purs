@@ -1,7 +1,9 @@
 module Proto.Uint8Array where
 
-import Data.Either (Either(Left, Right))
 import Prelude
+import Data.Either (Either(Left, Right))
+import Data.ArrayBuffer.Types (Uint8Array) as Types
+import Unsafe.Coerce (unsafeCoerce)
 
 foreign import data Uint8Array :: Type
 
@@ -21,3 +23,5 @@ index xs pos =
   let len = length xs
   in if 0 <= pos && pos < len then Right (indexUnsafe xs pos) else Left { pos, len }
 
+coerce :: Uint8Array -> Types.Uint8Array
+coerce = unsafeCoerce
