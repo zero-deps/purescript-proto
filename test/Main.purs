@@ -12,8 +12,8 @@ import Proto.Encode as Encode
 main :: Effect Unit
 main = do
   case_int_zero
-  case_int_positive
-  case_int_negative
+  case_int_max
+  case_int_min
   case_long_maxint
   case_long_minint
   case_eq
@@ -40,9 +40,9 @@ case_int_zero = do
     Right { val } -> assertEqual val x
   log "case_int_zero: ok"
 
-case_int_positive :: Effect Unit
-case_int_positive = do
-  let x = 1000
+case_int_max :: Effect Unit
+case_int_max = do
+  let x = 2147483647
   let encoded = Encode.signedVarint32 x
   let decoded = Decode.signedVarint32 encoded 0
   case decoded of
@@ -51,11 +51,11 @@ case_int_positive = do
       log $ show err
       exit 2
     Right { val } -> assertEqual val x
-  log "case_int_positive: ok"
+  log "case_int_max: ok"
 
-case_int_negative :: Effect Unit
-case_int_negative = do
-  let x = -1000
+case_int_min :: Effect Unit
+case_int_min = do
+  let x = -2147483648
   let encoded = Encode.signedVarint32 x
   let decoded = Decode.signedVarint32 encoded 0
   case decoded of
@@ -64,7 +64,7 @@ case_int_negative = do
       log $ show err
       exit 3
     Right { val } -> assertEqual val x
-  log "case_int_negative: ok"
+  log "case_int_min: ok"
 
 case_long_maxint :: Effect Unit
 case_long_maxint = do
