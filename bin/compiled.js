@@ -273,27 +273,78 @@ var PS = {};
   var TWO_TO_32 = 4294967296
   var TWO_TO_52 = 4503599627370496
 
-  exports.joinFloat64 = function(bitsLow) {
-    return function(bitsHigh) {
-      var sign = ((bitsHigh >> 31) * 2 + 1)
-      var exp = (bitsHigh >>> 20) & 0x7FF
-      var mant = TWO_TO_32 * (bitsHigh & 0xFFFFF) + bitsLow
+  exports.joinFloat64 = bitsLow => bitsHigh => {
+    var sign = ((bitsHigh >> 31) * 2 + 1)
+    var exp = (bitsHigh >>> 20) & 0x7FF
+    var mant = TWO_TO_32 * (bitsHigh & 0xFFFFF) + bitsLow
 
-      if (exp == 0x7FF) {
-        if (mant) {
-          return NaN
-        } else {
-          return sign * Infinity
-        }
-      }
-
-      if (exp == 0) {
-        // Denormal.
-        return sign * Math.pow(2, -1074) * mant
+    if (exp == 0x7FF) {
+      if (mant) {
+        return NaN
       } else {
-        return sign * Math.pow(2, exp - 1075) *
-               (mant + TWO_TO_52)
+        return sign * Infinity
       }
+    }
+
+    if (exp == 0) {
+      // Denormal.
+      return sign * Math.pow(2, -1074) * mant
+    } else {
+      return sign * Math.pow(2, exp - 1075) *
+              (mant + TWO_TO_52)
+    }
+  }
+
+  const joinUint64 = (bitsLow, bitsHigh) => {
+    return bitsHigh * TWO_TO_32 + (bitsLow >>> 0);
+  }
+
+  exports.joinInt64 = bitsLow => bitsHigh => {
+    // If the high bit is set, do a manual two's complement conversion.
+    var sign = (bitsHigh & 0x80000000)
+    if (sign) {
+      bitsLow = (~bitsLow + 1) >>> 0
+      bitsHigh = ~bitsHigh >>> 0
+      if (bitsLow == 0) {
+        bitsHigh = (bitsHigh + 1) >>> 0
+      }
+    }
+
+    var result = joinUint64(bitsLow, bitsHigh)
+    return sign ? -result : result
+  }
+
+  exports.readSplitVarint64 = bytes => pos => success => failure => {
+    var temp = 128
+    var lowBits = 0
+    var highBits = 0
+
+    // Read the first four bytes of the varint, stopping at the terminator if we
+    // see it.
+    for (var i = 0; i < 4 && temp >= 128; i++) {
+      temp = bytes[pos++];
+      lowBits |= (temp & 0x7F) << (i * 7);
+    }
+
+    if (temp >= 128) {
+      // Read the fifth byte, which straddles the low and high dwords.
+      temp = bytes[pos++];
+      lowBits |= (temp & 0x7F) << 28;
+      highBits |= (temp & 0x7F) >> 4;
+    }
+
+    if (temp >= 128) {
+      // Read the sixth through tenth byte.
+      for (var i = 0; i < 5 && temp >= 128; i++) {
+        temp = bytes[pos++];
+        highBits |= (temp & 0x7F) << (i * 7 + 3);
+      }
+    }
+
+    if (temp < 128) {
+      return success({ pos: pos, val: { low: lowBits >>> 0, high: highBits >>> 0 }})
+    } else {
+      return failure('Failed to read varint, encoding is invalid.')
     }
   }
 })(PS["Proto.Decode"] = PS["Proto.Decode"] || {});
@@ -323,7 +374,7 @@ var PS = {};
   $PS["Proto.Uint8Array"] = $PS["Proto.Uint8Array"] || {};
   var exports = $PS["Proto.Uint8Array"];
   var $foreign = $PS["Proto.Uint8Array"];
-  var Data_Either = $PS["Data.Either"];                    
+  var Data_Either = $PS["Data.Either"];   
   var index = function (xs) {
       return function (pos) {
           var len = $foreign.length(xs);
@@ -511,12 +562,21 @@ var PS = {};
       IntTooLong.value = new IntTooLong();
       return IntTooLong;
   })();
+  var ErrMsg = (function () {
+      function ErrMsg(value0) {
+          this.value0 = value0;
+      };
+      ErrMsg.create = function (value0) {
+          return new ErrMsg(value0);
+      };
+      return ErrMsg;
+  })();
   var skip = function (n) {
       return function (xs) {
           return function (pos0) {
               var len = Proto_Uint8Array.length(xs);
-              var $12 = (pos0 + n | 0) > len;
-              if ($12) {
+              var $13 = (pos0 + n | 0) > len;
+              if ($13) {
                   return new Data_Either.Left(new OutOfBound(pos0 + n | 0, len));
               };
               return Control_Applicative.pure(Data_Either.applicativeEither)({
@@ -524,6 +584,20 @@ var PS = {};
                   val: Data_Unit.unit
               });
           };
+      };
+  };
+  var signedVarint64 = function (xs) {
+      return function (pos) {
+          return Control_Bind.bind(Data_Either.bindEither)($foreign.readSplitVarint64(xs)(pos)(function (x) {
+              return new Data_Either.Right(x);
+          })(function (x) {
+              return Data_Either.Left.create(new ErrMsg(x));
+          }))(function (v) {
+              return Control_Applicative.pure(Data_Either.applicativeEither)({
+                  pos: v.pos,
+                  val: $foreign.joinInt64(v.val.low)(v.val.high)
+              });
+          });
       };
   };
   var showError = new Data_Show.Show(function (v) {
@@ -545,7 +619,10 @@ var PS = {};
       if (v instanceof IntTooLong) {
           return "varint32 too long";
       };
-      throw new Error("Failed pattern match at Proto.Decode (line 24, column 1 - line 30, column 42): " + [ v.constructor.name ]);
+      if (v instanceof ErrMsg) {
+          return v.value0;
+      };
+      throw new Error("Failed pattern match at Proto.Decode (line 44, column 1 - line 51, column 22): " + [ v.constructor.name ]);
   });
   var index = function (xs) {
       return function (pos) {
@@ -577,7 +654,7 @@ var PS = {};
                   $copy_pos = pos + 1 | 0;
                   return;
               };
-              throw new Error("Failed pattern match at Proto.Decode (line 112, column 3 - line 115, column 32): " + [ v.constructor.name ]);
+              throw new Error("Failed pattern match at Proto.Decode (line 156, column 3 - line 159, column 32): " + [ v.constructor.name ]);
           };
           while (!$tco_done) {
               $tco_result = $tco_loop($tco_var_xs, $copy_pos);
@@ -585,12 +662,12 @@ var PS = {};
           return $tco_result;
       };
   };
-  var uint32 = function (xs) {
+  var unsignedVarint32 = function (xs) {
       return function (pos) {
           return Control_Bind.bind(Data_Either.bindEither)(index(xs)(pos))(function (x) {
               var val = x & 127;
-              var $25 = x < 128;
-              if ($25) {
+              var $32 = x < 128;
+              if ($32) {
                   return Control_Applicative.pure(Data_Either.applicativeEither)({
                       pos: pos + 1 | 0,
                       val: val
@@ -598,8 +675,8 @@ var PS = {};
               };
               return Control_Bind.bind(Data_Either.bindEither)(index(xs)(pos + 1 | 0))(function (x1) {
                   var val1 = val | (x1 & 127) << 7;
-                  var $26 = x1 < 128;
-                  if ($26) {
+                  var $33 = x1 < 128;
+                  if ($33) {
                       return Control_Applicative.pure(Data_Either.applicativeEither)({
                           pos: pos + 2 | 0,
                           val: val1
@@ -607,8 +684,8 @@ var PS = {};
                   };
                   return Control_Bind.bind(Data_Either.bindEither)(index(xs)(pos + 2 | 0))(function (x2) {
                       var val2 = val1 | (x2 & 127) << 14;
-                      var $27 = x2 < 128;
-                      if ($27) {
+                      var $34 = x2 < 128;
+                      if ($34) {
                           return Control_Applicative.pure(Data_Either.applicativeEither)({
                               pos: pos + 3 | 0,
                               val: val2
@@ -616,8 +693,8 @@ var PS = {};
                       };
                       return Control_Bind.bind(Data_Either.bindEither)(index(xs)(pos + 3 | 0))(function (x3) {
                           var val3 = val2 | (x3 & 127) << 21;
-                          var $28 = x3 < 128;
-                          if ($28) {
+                          var $35 = x3 < 128;
+                          if ($35) {
                               return Control_Applicative.pure(Data_Either.applicativeEither)({
                                   pos: pos + 4 | 0,
                                   val: val3
@@ -625,48 +702,48 @@ var PS = {};
                           };
                           return Control_Bind.bind(Data_Either.bindEither)(index(xs)(pos + 4 | 0))(function (x4) {
                               var val4 = val3 | (x4 & 15) << 28;
-                              var $29 = x4 < 128;
-                              if ($29) {
+                              var $36 = x4 < 128;
+                              if ($36) {
                                   return Control_Applicative.pure(Data_Either.applicativeEither)({
                                       pos: pos + 5 | 0,
                                       val: val4 >>> 0
                                   });
                               };
                               return Control_Bind.bind(Data_Either.bindEither)(index(xs)(pos + 5 | 0))(function (x5) {
-                                  var $30 = x5 < 128;
-                                  if ($30) {
+                                  var $37 = x5 < 128;
+                                  if ($37) {
                                       return Control_Applicative.pure(Data_Either.applicativeEither)({
                                           pos: pos + 6 | 0,
                                           val: val4
                                       });
                                   };
                                   return Control_Bind.bind(Data_Either.bindEither)(index(xs)(pos + 6 | 0))(function (x6) {
-                                      var $31 = x6 < 128;
-                                      if ($31) {
+                                      var $38 = x6 < 128;
+                                      if ($38) {
                                           return Control_Applicative.pure(Data_Either.applicativeEither)({
                                               pos: pos + 7 | 0,
                                               val: val4
                                           });
                                       };
                                       return Control_Bind.bind(Data_Either.bindEither)(index(xs)(pos + 7 | 0))(function (x7) {
-                                          var $32 = x7 < 128;
-                                          if ($32) {
+                                          var $39 = x7 < 128;
+                                          if ($39) {
                                               return Control_Applicative.pure(Data_Either.applicativeEither)({
                                                   pos: pos + 8 | 0,
                                                   val: val4
                                               });
                                           };
                                           return Control_Bind.bind(Data_Either.bindEither)(index(xs)(pos + 8 | 0))(function (x8) {
-                                              var $33 = x8 < 128;
-                                              if ($33) {
+                                              var $40 = x8 < 128;
+                                              if ($40) {
                                                   return Control_Applicative.pure(Data_Either.applicativeEither)({
                                                       pos: pos + 9 | 0,
                                                       val: val4
                                                   });
                                               };
                                               return Control_Bind.bind(Data_Either.bindEither)(index(xs)(pos + 9 | 0))(function (x9) {
-                                                  var $34 = x9 < 128;
-                                                  if ($34) {
+                                                  var $41 = x9 < 128;
+                                                  if ($41) {
                                                       return Control_Applicative.pure(Data_Either.applicativeEither)({
                                                           pos: pos + 10 | 0,
                                                           val: val4
@@ -685,7 +762,7 @@ var PS = {};
           });
       };
   };
-  var int32 = uint32;
+  var signedVarint32 = unsignedVarint32;
   var skipType = function (v) {
       return function (v1) {
           return function (v2) {
@@ -699,17 +776,17 @@ var PS = {};
               };
               var xs = v;
               if (v2 === 2) {
-                  return Control_Bind.bind(Data_Either.bindEither)(uint32(xs)(v1))(function (v3) {
+                  return Control_Bind.bind(Data_Either.bindEither)(unsignedVarint32(xs)(v1))(function (v3) {
                       return skip(v3.val)(xs)(v3.pos);
                   });
               };
               if (v2 === 3) {
                   var loop = function (xs) {
                       return function (pos) {
-                          return Control_Bind.bind(Data_Either.bindEither)(uint32(xs)(pos))(function (v3) {
+                          return Control_Bind.bind(Data_Either.bindEither)(unsignedVarint32(xs)(pos))(function (v3) {
                               var wireType = v3.val & 7;
-                              var $42 = wireType !== 4;
-                              if ($42) {
+                              var $49 = wireType !== 4;
+                              if ($49) {
                                   return Control_Bind.bind(Data_Either.bindEither)(skipType(xs)(v3.pos)(wireType))(function (v4) {
                                       return loop(xs)(v4.pos);
                                   });
@@ -758,11 +835,11 @@ var PS = {};
   };
   var bytes = function (xs) {
       return function (pos0) {
-          return Control_Bind.bind(Data_Either.bindEither)(uint32(xs)(pos0))(function (v) {
+          return Control_Bind.bind(Data_Either.bindEither)(unsignedVarint32(xs)(pos0))(function (v) {
               var end = v.pos + v.val | 0;
               var len = Proto_Uint8Array.length(xs);
-              var $54 = end > len;
-              if ($54) {
+              var $61 = end > len;
+              if ($61) {
                   return new Data_Either.Left(new OutOfBound(end, len));
               };
               return Control_Applicative.pure(Data_Either.applicativeEither)({
@@ -785,8 +862,8 @@ var PS = {};
   var $$boolean = function (xs) {
       return function (pos) {
           return Control_Bind.bind(Data_Either.bindEither)(index(xs)(pos))(function (x) {
-              var $60 = x === 0;
-              if ($60) {
+              var $67 = x === 0;
+              if ($67) {
                   return Control_Applicative.pure(Data_Either.applicativeEither)({
                       pos: pos + 1 | 0,
                       val: false
@@ -805,9 +882,11 @@ var PS = {};
   exports["UnexpectedCase"] = UnexpectedCase;
   exports["MissingFields"] = MissingFields;
   exports["IntTooLong"] = IntTooLong;
+  exports["ErrMsg"] = ErrMsg;
   exports["index"] = index;
-  exports["int32"] = int32;
-  exports["uint32"] = uint32;
+  exports["signedVarint32"] = signedVarint32;
+  exports["unsignedVarint32"] = unsignedVarint32;
+  exports["signedVarint64"] = signedVarint64;
   exports["boolean"] = $$boolean;
   exports["double"] = $$double;
   exports["bytes"] = bytes;
@@ -817,6 +896,8 @@ var PS = {};
   exports["skipType"] = skipType;
   exports["showError"] = showError;
   exports["joinFloat64"] = $foreign.joinFloat64;
+  exports["joinInt64"] = $foreign.joinInt64;
+  exports["readSplitVarint64"] = $foreign.readSplitVarint64;
 })(PS);
 (function(exports) {
   "use strict"
@@ -827,7 +908,7 @@ var PS = {};
   var TWO_TO_32 = 4294967296
   var TWO_TO_52 = 4503599627370496
 
-  exports.splitFloat64 = function(value) {
+  exports.splitFloat64 = value => {
     var sign = (value < 0) ? 1 : 0
     value = sign ? -value : value
 
@@ -869,6 +950,45 @@ var PS = {};
 
     return { low: mantLow, high: ((sign << 31) | ((exp + 1023) << 20) | mantHigh) >>> 0 }
   }
+
+  exports.writeSplitVarint64 = lowBits => highBits => {
+    var buffer_ = []
+    // Break the binary representation into chunks of 7 bits, set the 8th bit
+    // in each chunk if it's not the final chunk, and append to the result.
+    while (highBits > 0 || lowBits > 127) {
+      buffer_.push((lowBits & 0x7f) | 0x80)
+      lowBits = ((lowBits >>> 7) | (highBits << 25)) >>> 0
+      highBits = highBits >>> 7
+    }
+    buffer_.push(lowBits)
+    return buffer_
+  }
+
+  exports.splitInt64 = value => {
+    // Convert to sign-magnitude representation.
+    var sign = (value < 0)
+    value = Math.abs(value)
+
+    // Extract low 32 bits and high 32 bits as unsigned integers.
+    var lowBits = value >>> 0
+    var highBits = Math.floor((value - lowBits) /
+                              TWO_TO_32)
+    highBits = highBits >>> 0
+
+    // Perform two's complement conversion if the sign bit was set.
+    if (sign) {
+      highBits = ~highBits >>> 0
+      lowBits = ~lowBits >>> 0
+      lowBits += 1
+      if (lowBits > 0xFFFFFFFF) {
+        lowBits = 0
+        highBits++
+        if (highBits > 0xFFFFFFFF) highBits = 0
+      }
+    }
+
+    return { low: lowBits, high: highBits }
+  }
 })(PS["Proto.Encode"] = PS["Proto.Encode"] || {});
 (function($PS) {
   // Generated by purs version 0.13.8
@@ -879,7 +999,7 @@ var PS = {};
   var Data_Array = $PS["Data.Array"];
   var Proto_Uint8Array = $PS["Proto.Uint8Array"];
   var Proto_Utf8 = $PS["Proto.Utf8"];                
-  var uint32 = (function () {
+  var unsignedVarint32 = (function () {
       var loop = function ($copy_acc) {
           return function ($copy_val) {
               var $tco_var_acc = $copy_acc;
@@ -910,13 +1030,17 @@ var PS = {};
       var len = Proto_Utf8.numOfBytes(x);
       var $2 = len === 0;
       if ($2) {
-          return uint32(0);
+          return unsignedVarint32(0);
       };
-      return Proto_Uint8Array.concatAll([ uint32(len), Proto_Utf8.toUint8Array(x)(len) ]);
+      return Proto_Uint8Array.concatAll([ unsignedVarint32(len), Proto_Utf8.toUint8Array(x)(len) ]);
   };
-  var int32 = function (x) {
+  var signedVarint64 = function (y) {
+      var x = $foreign.splitInt64(y);
+      return $foreign.writeSplitVarint64(x.low)(x.high);
+  };
+  var signedVarint32 = function (x) {
       if (x >= 0) {
-          return uint32(x);
+          return unsignedVarint32(x);
       };
       var loop = function ($copy_acc) {
           return function ($copy_val) {
@@ -955,9 +1079,9 @@ var PS = {};
       var len = Proto_Uint8Array.length(xs);
       var $7 = len === 0;
       if ($7) {
-          return uint32(0);
+          return unsignedVarint32(0);
       };
-      return Proto_Uint8Array.concatAll([ uint32(len), xs ]);
+      return Proto_Uint8Array.concatAll([ unsignedVarint32(len), xs ]);
   };
   var $$boolean = function (v) {
       if (v) {
@@ -966,13 +1090,16 @@ var PS = {};
       if (!v) {
           return Proto_Uint8Array.fromArray([ 0 ]);
       };
-      throw new Error("Failed pattern match at Proto.Encode (line 38, column 1 - line 38, column 33): " + [ v.constructor.name ]);
+      throw new Error("Failed pattern match at Proto.Encode (line 57, column 1 - line 57, column 33): " + [ v.constructor.name ]);
   };
-  exports["int32"] = int32;
-  exports["uint32"] = uint32;
+  exports["signedVarint32"] = signedVarint32;
+  exports["unsignedVarint32"] = unsignedVarint32;
+  exports["signedVarint64"] = signedVarint64;
   exports["double"] = $$double;
   exports["string"] = string;
   exports["boolean"] = $$boolean;
   exports["bytes"] = bytes;
   exports["splitFloat64"] = $foreign.splitFloat64;
+  exports["writeSplitVarint64"] = $foreign.writeSplitVarint64;
+  exports["splitInt64"] = $foreign.splitInt64;
 })(PS);

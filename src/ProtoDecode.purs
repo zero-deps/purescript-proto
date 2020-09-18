@@ -16,10 +16,30 @@ data Error
   | UnexpectedCase Int Int
   | MissingFields String
   | IntTooLong
+  | ErrMsg String
 type Result' a = Either Error a
-type Result a = Result' { pos :: Int, val :: a }
+type Result a = Result' { pos :: Pos, val :: a }
 
+-- | Joins two 32-bit values into a 64-bit IEEE floating point number and
+-- | converts it back into a Javascript number.
 foreign import joinFloat64 :: Int -> Int -> Number
+
+-- | Joins two 32-bit values into a 64-bit signed integer. Precision will be lost
+-- | if the result is greater than 2^52.
+foreign import joinInt64 :: Int -> Int -> Number
+
+-- | Reads an unsigned varint from the binary stream and invokes the conversion
+-- | function with the value in two signed 32 bit integers to produce the result.
+-- | Since this does not convert the value to a number, no precision is lost.
+-- |
+-- | It's possible for an unsigned varint to be incorrectly encoded - more than
+-- | 64 bits' worth of data could be present. If this happens, this method will
+-- | throw an error.
+-- |
+-- | Decoding varints requires doing some funny base-128 math - for more
+-- | details on the format, see
+-- | https://developers.google.com/protocol-buffers/docs/encoding
+foreign import readSplitVarint64 :: Uint8Array -> Pos -> ({ pos :: Pos, val :: { low :: Int, high :: Int }} -> Result { low :: Int, high :: Int }) -> (String -> Result  { low :: Int, high :: Int }) -> Result { low :: Int, high :: Int }
 
 instance showError :: Show Error where
   show (OutOfBound i l) = "index="<>show i<>" out of bound="<>show l
@@ -28,15 +48,31 @@ instance showError :: Show Error where
   show (UnexpectedCase x i) = "unexpected case val="<>show x<>" pos="<>show i
   show (MissingFields x) = "missing fields in="<>x
   show (IntTooLong) = "varint32 too long"
+  show (ErrMsg x) = x
 
 index :: Uint8Array -> Int -> Result' Int
 index xs pos = lmap (\x -> OutOfBound x.pos x.len) $ Uint8Array.index xs pos
 
-int32 :: Uint8Array -> Pos -> Result Int
-int32 = uint32
+-- | The readUnsignedVarint32 deals with signed 32-bit varints correctly, so this is just an alias.
+signedVarint32 :: Uint8Array -> Pos -> Result Int
+signedVarint32 = unsignedVarint32
 
-uint32 :: Uint8Array -> Pos -> Result Int
-uint32 xs pos = do
+-- | Reads a 32-bit varint from the binary stream. Due to a quirk of the encoding
+-- | format and Javascript's handling of bitwise math, this actually works
+-- | correctly for both signed and unsigned 32-bit varints.
+-- |
+-- | This function is called vastly more frequently than any other in
+-- | BinaryDecoder, so it has been unrolled and tweaked for performance.
+-- |
+-- | If there are more than 32 bits of data in the varint, it _must_ be due to
+-- | sign-extension. If we're in debug mode and the high 32 bits don't match the
+-- | expected sign extension, this method will throw an error.
+-- |
+-- | Decoding varints requires doing some funny base-128 math - for more
+-- | details on the format, see
+-- | https://developers.google.com/protocol-buffers/docs/encoding
+unsignedVarint32 :: Uint8Array -> Pos -> Result Int
+unsignedVarint32 xs pos = do
   x <- index xs pos
   let val = x .&. 127
   if x < 128 then pure { pos: pos+1, val: val } else do
@@ -73,6 +109,14 @@ uint32 xs pos = do
                               then pure { pos: pos+10, val: val4 }
                               else Left $ IntTooLong
 
+-- | Reads a signed 64-bit varint from the binary stream. Note that since
+-- | Javascript represents all numbers as double-precision floats, there will be
+-- | precision lost if the absolute value of the varint is larger than 2^53.
+signedVarint64 :: Uint8Array -> Pos -> Result Number
+signedVarint64 xs pos = do
+  { pos: pos1, val: { low, high } } <- readSplitVarint64 xs pos (\x -> Right x) (\x -> Left $ ErrMsg x)
+  pure { pos: pos1, val: joinInt64 low high }
+
 boolean :: Uint8Array -> Pos -> Result Boolean
 boolean xs pos = do
   x <- index xs pos
@@ -94,7 +138,7 @@ double xs pos = do
 
 bytes :: Uint8Array -> Pos -> Result Uint8Array
 bytes xs pos0 = do
-  { pos, val: res_len } <- uint32 xs pos0
+  { pos, val: res_len } <- unsignedVarint32 xs pos0
   let start = pos
   let end = pos+res_len
   let len = length xs
@@ -121,12 +165,12 @@ skipType :: Uint8Array -> Pos -> Int -> Result Unit
 skipType xs pos0 0 = skip' xs pos0
 skipType xs pos0 1 = skip 8 xs pos0
 skipType xs pos0 2 = do
-  { pos, val } <- uint32 xs pos0
+  { pos, val } <- unsignedVarint32 xs pos0
   skip val xs $ pos
 skipType xs0 pos0 3 = loop xs0 pos0
   where
   loop xs pos = do
-    { pos: pos1, val } <- uint32 xs pos
+    { pos: pos1, val } <- unsignedVarint32 xs pos
     let wireType = val .&. 7
     if wireType /= 4 then do
       { pos: pos2 } <- skipType xs pos1 wireType

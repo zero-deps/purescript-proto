@@ -14,6 +14,8 @@ main = do
   case_int_zero
   case_int_positive
   case_int_negative
+  case_long_maxint
+  case_long_minint
   case_eq
 
 case_eq :: Effect Unit
@@ -28,8 +30,8 @@ case_eq = do
 case_int_zero :: Effect Unit
 case_int_zero = do
   let x = 0
-  let encoded = Encode.int32 x
-  let decoded = Decode.int32 encoded 0
+  let encoded = Encode.signedVarint32 x
+  let decoded = Decode.signedVarint32 encoded 0
   case decoded of
     Left err -> do
       log $ printBytes encoded
@@ -41,8 +43,8 @@ case_int_zero = do
 case_int_positive :: Effect Unit
 case_int_positive = do
   let x = 1000
-  let encoded = Encode.int32 x
-  let decoded = Decode.int32 encoded 0
+  let encoded = Encode.signedVarint32 x
+  let decoded = Decode.signedVarint32 encoded 0
   case decoded of
     Left err -> do
       log $ printBytes encoded
@@ -54,8 +56,8 @@ case_int_positive = do
 case_int_negative :: Effect Unit
 case_int_negative = do
   let x = -1000
-  let encoded = Encode.int32 x
-  let decoded = Decode.int32 encoded 0
+  let encoded = Encode.signedVarint32 x
+  let decoded = Decode.signedVarint32 encoded 0
   case decoded of
     Left err -> do
       log $ printBytes encoded
@@ -63,6 +65,32 @@ case_int_negative = do
       exit 3
     Right { val } -> assertEqual val x
   log "case_int_negative: ok"
+
+case_long_maxint :: Effect Unit
+case_long_maxint = do
+  let x = 9007199254740991.0 -- Number.MAX_SAFE_INTEGER
+  let encoded = Encode.signedVarint64 x
+  let decoded = Decode.signedVarint64 encoded 0
+  case decoded of
+    Left err -> do
+      log $ printBytes encoded
+      log $ show err
+      exit 4
+    Right { val } -> assertEqual val x
+  log "case_long_maxint: ok"
+
+case_long_minint :: Effect Unit
+case_long_minint = do
+  let x = -9007199254740991.0 -- Number.MIN_SAFE_INTEGER
+  let encoded = Encode.signedVarint64 x
+  let decoded = Decode.signedVarint64 encoded 0
+  case decoded of
+    Left err -> do
+      log $ printBytes encoded
+      log $ show err
+      exit 5
+    Right { val } -> assertEqual val x
+  log "case_long_minint: ok"
 
 assertEqual :: forall a. Eq a => Show a => a -> a -> Effect Unit
 assertEqual actual expected =
