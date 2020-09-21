@@ -1,12 +1,11 @@
 "use strict"
 
-var FLOAT64_MAX = 1.7976931348623157e+308
-var FLOAT64_MIN = 2.2250738585072014e-308
-var TWO_TO_20 = 1048576
-var TWO_TO_32 = 4294967296
-var TWO_TO_52 = 4503599627370496
-
 exports.splitFloat64 = value => {
+  var FLOAT64_MAX = 1.7976931348623157e+308
+  var FLOAT64_MIN = 2.2250738585072014e-308
+  var TWO_TO_20 = 1048576
+  var TWO_TO_32 = 4294967296
+  var TWO_TO_52 = 4503599627370496
   var sign = (value < 0) ? 1 : 0
   value = sign ? -value : value
 
@@ -63,6 +62,7 @@ exports.writeSplitVarint64 = lowBits => highBits => {
 }
 
 exports.splitInt64 = value => {
+  var TWO_TO_32 = 4294967296
   // Convert to sign-magnitude representation.
   var sign = (value < 0)
   value = Math.abs(value)

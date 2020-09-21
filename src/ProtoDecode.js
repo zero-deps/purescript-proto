@@ -1,9 +1,8 @@
 "use strict"
 
-var TWO_TO_32 = 4294967296
-var TWO_TO_52 = 4503599627370496
-
 exports.joinFloat64 = bitsLow => bitsHigh => {
+  var TWO_TO_32 = 4294967296
+  var TWO_TO_52 = 4503599627370496
   var sign = ((bitsHigh >> 31) * 2 + 1)
   var exp = (bitsHigh >>> 20) & 0x7FF
   var mant = TWO_TO_32 * (bitsHigh & 0xFFFFF) + bitsLow
@@ -26,6 +25,7 @@ exports.joinFloat64 = bitsLow => bitsHigh => {
 }
 
 const joinUint64 = (bitsLow, bitsHigh) => {
+  var TWO_TO_32 = 4294967296
   return bitsHigh * TWO_TO_32 + (bitsLow >>> 0);
 }
 
