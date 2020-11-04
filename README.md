@@ -7,24 +7,20 @@ Protobuf encoding/decoding library for PureScript
 ### spago
 
 packages.dhall:
-```
+```dhall
 let additions =
-      { protobuf =
-        { dependencies = [ "integers", "arrays", "arraybuffer-types" ]
-        , repo = "https://github.com/zero-deps/purescript-protobuf.git"
-        , version = "1.1.5"
-        }
+    { protobuf =
+      { dependencies = [ "integers", "arrays", "arraybuffer-types" ]
+      , repo = "https://github.com/zero-deps/purescript-protobuf.git"
+      , version = "1.2.0"
       }
+    }
 ```
 
-### bower
-
-`bower.json`:
-```json
-{
-  "dependencies": {
-    "purescript-protobuf": "https://github.com/zero-deps/purescript-protobuf.git#1.1.5"
-  }
+spago.dhall:
+```dhall
+{ dependencies = ["protobuf"]
+, packages = ./packages.dhall
 }
 ```
 
