@@ -44,6 +44,21 @@ exports.joinInt64 = bitsLow => bitsHigh => {
   return sign ? -result : result
 }
 
+exports.joinBigInt = bitsLow => bitsHigh => {
+  // If the high bit is set, do a manual two's complement conversion.
+  var sign = (bitsHigh & 0x80000000)
+  if (sign) {
+    bitsLow = (~bitsLow + 1) >>> 0
+    bitsHigh = ~bitsHigh >>> 0
+    if (bitsLow == 0) {
+      bitsHigh = (bitsHigh + 1) >>> 0
+    }
+  }
+  var TWO_TO_32 = 4294967296n
+  var result = BigInt(bitsHigh) * TWO_TO_32 + BigInt((bitsLow >>> 0))
+  return sign ? -result : result
+}
+
 exports.readSplitVarint64 = bytes => pos => success => failure => {
   var temp = 128
   var lowBits = 0

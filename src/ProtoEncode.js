@@ -87,3 +87,31 @@ exports.splitInt64 = value => {
 
   return { low: lowBits, high: highBits }
 }
+
+exports.splitBigInt = value => {
+  var TWO_TO_32 = 4294967296n
+  // Convert to sign-magnitude representation.
+  var sign = (value < 0)
+  value = sign ? -value : value
+
+  // Extract low 32 bits and high 32 bits as unsigned integers.
+  var lowBits = BigInt.asUintN(32, value)
+  var highBits = Math.floor(Number((value - lowBits) / TWO_TO_32))
+  highBits = highBits >>> 0
+
+  lowBits = Number(lowBits)
+
+  // Perform two's complement conversion if the sign bit was set.
+  if (sign) {
+    highBits = ~highBits >>> 0
+    lowBits = ~lowBits >>> 0
+    lowBits += 1
+    if (lowBits > 0xFFFFFFFF) {
+      lowBits = 0
+      highBits++
+      if (highBits > 0xFFFFFFFF) highBits = 0
+    }
+  }
+
+  return { low: lowBits, high: highBits }
+}

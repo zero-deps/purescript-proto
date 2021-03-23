@@ -7,6 +7,7 @@ import Prelude
 import Proto.Uint8Array (Uint8Array, length, slice)
 import Proto.Uint8Array (index) as Uint8Array
 import Proto.Utf8 as Utf8
+import Proto.BigInt (BigInt)
 
 type Pos = Int
 data Error
@@ -27,6 +28,8 @@ foreign import joinFloat64 :: Int -> Int -> Number
 -- | Joins two 32-bit values into a 64-bit signed integer. Precision will be lost
 -- | if the result is greater than 2^52.
 foreign import joinInt64 :: Int -> Int -> Number
+
+foreign import joinBigInt :: Int -> Int -> BigInt
 
 -- | Reads an unsigned varint from the binary stream and invokes the conversion
 -- | function with the value in two signed 32 bit integers to produce the result.
@@ -116,6 +119,11 @@ signedVarint64 :: Uint8Array -> Pos -> Result Number
 signedVarint64 xs pos = do
   { pos: pos1, val: { low, high } } <- readSplitVarint64 xs pos (\x -> Right x) (\x -> Left $ ErrMsg x)
   pure { pos: pos1, val: joinInt64 low high }
+
+bigInt :: Uint8Array -> Pos -> Result BigInt
+bigInt xs pos = do
+  { pos: pos1, val: { low, high } } <- readSplitVarint64 xs pos (\x -> Right x) (\x -> Left $ ErrMsg x)
+  pure { pos: pos1, val: joinBigInt low high }
 
 boolean :: Uint8Array -> Pos -> Result Boolean
 boolean xs pos = do

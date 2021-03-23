@@ -5,6 +5,7 @@ import Data.Int.Bits (zshr, shr, (.&.), (.|.))
 import Prelude
 import Proto.Uint8Array (Uint8Array, length, concatAll, fromArray)
 import Proto.Utf8 as Utf8
+import Proto.BigInt (BigInt)
 
 type Low = Int
 type High = Int
@@ -15,6 +16,8 @@ foreign import splitFloat64 :: Number -> { low :: Low, high :: High }
 foreign import writeSplitVarint64 :: Low -> High -> Uint8Array
 -- | Splits a signed Javascript integer into two 32-bit halves.
 foreign import splitInt64 :: Number -> { low :: Low, high :: High }
+
+foreign import splitBigInt :: BigInt -> { low :: Low, high :: High }
 
 -- | Encodes a 32-bit signed integer into its wire-format varint representation.
 signedVarint32 :: Int -> Uint8Array
@@ -40,6 +43,9 @@ unsignedVarint32 = loop [] >>> fromArray
 -- | Integers that are not representable in 64 bits will be truncated.
 signedVarint64 :: Number -> Uint8Array
 signedVarint64 y = let x = splitInt64 y in writeSplitVarint64 x.low x.high
+
+bigInt :: BigInt -> Uint8Array
+bigInt y = let x = splitBigInt y in writeSplitVarint64 x.low x.high
 
 double :: Number -> Uint8Array
 double y = let x = splitFloat64 y in concatAll [ fixedUint32 x.low, fixedUint32 x.high ]

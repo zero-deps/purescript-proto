@@ -8,6 +8,8 @@ import Data.Either (Either(Left, Right))
 import Node.Process (exit)
 import Proto.Decode as Decode
 import Proto.Encode as Encode
+import Proto.BigInt (BigInt)
+import Proto.BigInt (fromNumber, fromString) as BigInt
 
 main :: Effect Unit
 main = do
@@ -17,6 +19,11 @@ main = do
   case_long_maxint
   case_long_minint
   case_eq
+  case_bigint_max_number
+  case_bigint_min_number
+  case_bigint_max_long
+  case_bigint_min_long
+  case_bigint_zero
 
 case_eq :: Effect Unit
 case_eq = do
@@ -91,6 +98,38 @@ case_long_minint = do
       exit 5
     Right { val } -> assertEqual val x
   log "case_long_minint: ok"
+
+case_bigint_max_number :: Effect Unit
+case_bigint_max_number = 
+  case_bigint "case_bigint_max_number" $ BigInt.fromNumber 9007199254740991.0
+
+case_bigint_min_number :: Effect Unit
+case_bigint_min_number =
+  case_bigint "case_bigint_min_number" $ BigInt.fromNumber $ -9007199254740991.0
+
+case_bigint_max_long :: Effect Unit
+case_bigint_max_long = 
+  case_bigint "case_bigint_max_long" $ BigInt.fromString "9223372036854775807"
+
+case_bigint_min_long :: Effect Unit
+case_bigint_min_long = 
+  case_bigint "case_bigint_min_long" $ BigInt.fromString "-9223372036854775807"
+
+case_bigint_zero :: Effect Unit
+case_bigint_zero = 
+  case_bigint "case_bigint_zero" $ BigInt.fromNumber 0.0
+
+case_bigint :: String -> BigInt -> Effect Unit
+case_bigint name x = do
+  let encoded = Encode.bigInt x
+  let decoded = Decode.bigInt encoded 0
+  case decoded of
+    Left err -> do
+      log $ printBytes encoded
+      log $ show err
+      exit 5
+    Right { val } -> assertEqual val x
+  log $ name <> ": ok"
 
 assertEqual :: forall a. Eq a => Show a => a -> a -> Effect Unit
 assertEqual actual expected =
