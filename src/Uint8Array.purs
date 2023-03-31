@@ -2,6 +2,7 @@ module Proto.Uint8Array where
 
 import Data.ArrayBuffer.Types (ArrayBuffer, Uint8Array) as Types
 import Data.Either (Either(Left, Right))
+import Effect (Effect)
 import Prelude
 import Unsafe.Coerce (unsafeCoerce)
 
