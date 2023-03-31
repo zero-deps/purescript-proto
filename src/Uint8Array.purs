@@ -1,8 +1,8 @@
 module Proto.Uint8Array where
 
-import Prelude
+import Data.ArrayBuffer.Types (ArrayBuffer, Uint8Array) as Types
 import Data.Either (Either(Left, Right))
-import Data.ArrayBuffer.Types (Uint8Array) as Types
+import Prelude
 import Unsafe.Coerce (unsafeCoerce)
 
 foreign import data Uint8Array :: Type
@@ -12,6 +12,7 @@ foreign import indexUnsafe :: Uint8Array -> Int -> Int
 foreign import slice :: Uint8Array -> Int -> Int -> Uint8Array
 foreign import concatAll :: Array Uint8Array -> Uint8Array
 foreign import fromArray :: Array Int -> Uint8Array
+foreign import fromArrayBuffer :: Types.ArrayBuffer -> Effect Uint8Array
 
 foreign import eqImpl :: Uint8Array -> Uint8Array -> Boolean
 

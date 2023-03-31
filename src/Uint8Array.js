@@ -8,6 +8,8 @@ export const slice = xs => start => end => xs.slice(start, end)
 
 export const fromArray = xs => new Uint8Array(xs)
 
+export const fromArrayBuffer = xs => () => new Uint8Array(xs)
+
 export const concatAll = xs => {
   const zs = new Uint8Array(xs.reduce((acc, x) => acc + x.length, 0))
   xs.reduce((acc, x) => {
