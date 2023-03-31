@@ -30,7 +30,7 @@ signedVarint32 x = fromArray $ loop [] x 0
   loop acc val i | i < 9 = loop (acc `snoc` ((val .&. 0x7f) .|. 0x80)) (val `shr` 7) (i + 1)
   -- The above loop writes out 63 bits, so the last byte is always the sign bit
   -- which is always set for negative numbers.
-  loop acc val i = acc `snoc` 1
+  loop acc _ _ = acc `snoc` 1
 
 -- | Encodes a 32-bit unsigned integer into its wire-format varint representation.
 unsignedVarint32 :: Int -> Uint8Array
