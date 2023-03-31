@@ -1,14 +1,14 @@
 "use strict"
 
-exports.length = xs => xs.length
+export const length = xs => xs.length
 
-exports.indexUnsafe = xs => i => xs[i]
+export const indexUnsafe = xs => i => xs[i]
 
-exports.slice = xs => start => end => xs.slice(start, end)
+export const slice = xs => start => end => xs.slice(start, end)
 
-exports.fromArray = xs => new Uint8Array(xs)
+export const fromArray = xs => new Uint8Array(xs)
 
-exports.concatAll = xs => {
+export const concatAll = xs => {
   const zs = new Uint8Array(xs.reduce((acc, x) => acc + x.length, 0))
   xs.reduce((acc, x) => {
     zs.set(x, acc)
@@ -17,4 +17,4 @@ exports.concatAll = xs => {
   return zs
 }
 
-exports.eqImpl = xs => ys => (xs === ys) || (xs.length === ys.length && xs.every((x,i) => x === ys[i]))
+export const eqImpl = xs => ys => (xs === ys) || (xs.length === ys.length && xs.every((x,i) => x === ys[i]))

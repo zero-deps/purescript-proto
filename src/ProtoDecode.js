@@ -1,6 +1,6 @@
 "use strict"
 
-exports.joinFloat64 = bitsLow => bitsHigh => {
+export const joinFloat64 = bitsLow => bitsHigh => {
   var TWO_TO_32 = 4294967296
   var TWO_TO_52 = 4503599627370496
   var sign = ((bitsHigh >> 31) * 2 + 1)
@@ -29,7 +29,7 @@ const joinUint64 = (bitsLow, bitsHigh) => {
   return bitsHigh * TWO_TO_32 + (bitsLow >>> 0);
 }
 
-exports.joinInt64 = bitsLow => bitsHigh => {
+export const joinInt64 = bitsLow => bitsHigh => {
   // If the high bit is set, do a manual two's complement conversion.
   var sign = (bitsHigh & 0x80000000)
   if (sign) {
@@ -44,7 +44,7 @@ exports.joinInt64 = bitsLow => bitsHigh => {
   return sign ? -result : result
 }
 
-exports.joinBigInt = bitsLow => bitsHigh => {
+export const joinBigInt = bitsLow => bitsHigh => {
   // If the high bit is set, do a manual two's complement conversion.
   var sign = (bitsHigh & 0x80000000)
   if (sign) {
@@ -59,7 +59,7 @@ exports.joinBigInt = bitsLow => bitsHigh => {
   return sign ? -result : result
 }
 
-exports.readSplitVarint64 = bytes => pos => success => failure => {
+export const readSplitVarint64 = bytes => pos => success => failure => {
   var temp = 128
   var lowBits = 0
   var highBits = 0

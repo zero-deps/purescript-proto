@@ -1,8 +1,8 @@
 "use strict"
 
-exports.fromNumber = num => BigInt(num)
-exports.unsafeToNumber = num => Number(num)
-exports.fromString = str => BigInt(str)
+export const fromNumber = num => BigInt(num)
+export const unsafeToNumber = num => Number(num)
+export const fromString = str => BigInt(str)
 
-exports.showImpl = num => num.toString()
-exports.eqImpl = x => y => x === y
+export const showImpl = num => num.toString()
+export const eqImpl = x => y => x === y

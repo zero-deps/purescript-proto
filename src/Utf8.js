@@ -1,6 +1,6 @@
 "use strict"
 
-exports.numOfBytes = function(string) {
+export const numOfBytes = function(string) {
   var len = 0,
       c = 0
   for (var i = 0; i < string.length; ++i) {
@@ -18,7 +18,7 @@ exports.numOfBytes = function(string) {
   return len
 }
 
-exports.toString = function(buffer) {
+export const toString = function(buffer) {
   var start = 0
   var end = buffer.length
   var len = end - start
@@ -53,7 +53,7 @@ exports.toString = function(buffer) {
   return String.fromCharCode.apply(String, chunk.slice(0, i))
 }
 
-exports.toUint8Array = function(string) {
+export const toUint8Array = function(string) {
   return function(len) {
     var buffer = new Uint8Array(len)
     var offset = 0

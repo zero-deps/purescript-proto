@@ -1,6 +1,6 @@
 "use strict"
 
-exports.splitFloat64 = value => {
+export const splitFloat64 = value => {
   var FLOAT64_MAX = 1.7976931348623157e+308
   var FLOAT64_MIN = 2.2250738585072014e-308
   var TWO_TO_20 = 1048576
@@ -48,7 +48,7 @@ exports.splitFloat64 = value => {
   return { low: mantLow, high: ((sign << 31) | ((exp + 1023) << 20) | mantHigh) >>> 0 }
 }
 
-exports.writeSplitVarint64 = lowBits => highBits => {
+export const writeSplitVarint64 = lowBits => highBits => {
   var buffer_ = []
   // Break the binary representation into chunks of 7 bits, set the 8th bit
   // in each chunk if it's not the final chunk, and append to the result.
@@ -61,7 +61,7 @@ exports.writeSplitVarint64 = lowBits => highBits => {
   return buffer_
 }
 
-exports.splitInt64 = value => {
+export const splitInt64 = value => {
   var TWO_TO_32 = 4294967296
   // Convert to sign-magnitude representation.
   var sign = (value < 0)
@@ -88,7 +88,7 @@ exports.splitInt64 = value => {
   return { low: lowBits, high: highBits }
 }
 
-exports.splitBigInt = value => {
+export const splitBigInt = value => {
   var TWO_TO_32 = 4294967296n
   // Convert to sign-magnitude representation.
   var sign = (value < 0)
