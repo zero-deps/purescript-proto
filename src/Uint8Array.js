@@ -6,9 +6,11 @@ export const indexUnsafe = xs => i => xs[i]
 
 export const slice = xs => start => end => xs.slice(start, end)
 
+export const newUint8Array = len => new Uint8Array(len)
+
 export const fromArray = xs => new Uint8Array(xs)
 
-export const fromArrayBuffer = xs => () => new Uint8Array(xs)
+export const fromArrayBuffer = xs => new Uint8Array(xs)
 
 export const concatAll = xs => {
   const zs = new Uint8Array(xs.reduce((acc, x) => acc + x.length, 0))
