@@ -1,5 +1,7 @@
 # purescript-protobuf
 
+![Production Ready](https://img.shields.io/badge/Project%20Stage-Production%20Ready-brightgreen.svg)
+
 Protobuf encoding/decoding library for PureScript
 
 ## Install
@@ -12,7 +14,7 @@ let additions =
     { protobuf =
       { dependencies = [ "integers", "arrays", "arraybuffer-types" ]
       , repo = "https://github.com/zero-deps/purescript-protobuf.git"
-      , version = "1.2.0"
+      , version = "1.3.4"
       }
     }
 ```
